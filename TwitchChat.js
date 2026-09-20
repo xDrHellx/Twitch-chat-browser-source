@@ -79,6 +79,7 @@ class TwitchChat {
         this.#ws.onmessage = e => {
             for (const line of e.data.split("\r\n")) {
                 this.#handle(line);
+                this.hideOverflowingMessages();
             }
         };
 
@@ -86,6 +87,24 @@ class TwitchChat {
             console.log("Disconnected from chat, reconnecting in 5 seconds...")
             setTimeout(() => this.#connectToChat(), 5000);
         }
+    }
+
+    /**
+     * Hide messages overflowing from the top (messages that aren't entirely visible)
+     */
+    hideOverflowingMessages() {
+        const containerRect = this.chat.getBoundingClientRect(),
+            messages = [...this.chat.children];
+
+        const messagesToHide = messages.filter(message => {
+            const rect = message.getBoundingClientRect();
+            return rect.top < containerRect.top;
+        });
+
+        messagesToHide.forEach(message => {
+            message.classList.add("hide");
+            message.classList.remove("show");
+        });
     }
 
     //#endregion
@@ -255,22 +274,39 @@ class TwitchChat {
             return;
         }
 
-        // Show the message
+        // Show the message, then remove it after some time
+        const div = this.#generateMessageDiv(msg, tags);
+        this.chat.appendChild(div);
+        this.#removeMessageAfterTime(div, this.#msgDisplayTime);
+    }
+
+    /**
+     * Generate the div for a chat message
+     * @param {string} msg Message
+     * @param {object} tags Tags (user color, display-name, ...)
+     * @returns {HTMLDivElement} HTML
+     */
+    #generateMessageDiv(msg, tags) {
         const div = document.createElement("div");
         div.className = "message show";
         div.innerHTML = `
             <b style="color:${tags.color}">
                 ${this.escapeHtml(tags["display-name"])}
             </b>: ${this.#renderMessage(msg, tags.emotes)}`;
+        return div;
+    }
 
-        this.chat.appendChild(div);
-
-        // Remove message after X seconds
+    /**
+     * Remove a chat message after a specified duration
+     * @param {HTMLDivElement} div Message div
+     * @param {int} duration Duration to wait for (in milliseconds) before removing the message
+     */
+    #removeMessageAfterTime(div, duration) {
         setTimeout(() => {
-            div.classList.add("hide");
+            div.classList.add("hide")
             div.classList.remove("show");
             div.addEventListener("animationend", () => div.remove(), {once: true});
-        }, this.convertSecondsToMilliseconds(this.#msgDisplayTime));
+        }, this.convertSecondsToMilliseconds(duration));
     }
 
     /**
@@ -296,9 +332,8 @@ class TwitchChat {
             }
         }
 
-        parts.sort((a, b) => a.start - b.start);
-
         // Render emotes (in order) within the message
+        parts.sort((a, b) => a.start - b.start);
         let html = "",
             last = 0;
         for (const p of parts) {
