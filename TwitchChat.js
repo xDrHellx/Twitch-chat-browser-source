@@ -232,7 +232,7 @@ class TwitchChat {
         }
 
         tags.username = msg[2].toLowerCase();
-        this.#showMessage(tags, msg[3]);
+        this.#showChatMessage(tags, msg[3]);
     }
 
     /**
@@ -240,7 +240,7 @@ class TwitchChat {
      * @param {object} tags
      * @param {string} msg
      */
-    #showMessage(tags, msg) {
+    #showChatMessage(tags, msg) {
 
         // Filter out messages from ignored users (mostly bots)
         const user = tags.username;
@@ -259,25 +259,15 @@ class TwitchChat {
         }
 
         // Show the message, then remove it after some time
-        const div = this.#generateMessageDiv(msg, tags);
-        this.chat.appendChild(div);
+        const div = this.createDiv({
+            content: `
+                <b style="color:${tags.color}">
+                    ${this.escapeHtml(tags["display-name"])}
+                </b>: ${this.#renderMessage(msg, tags.emotes)}`,
+            classes: "message show",
+            parent: this.chat
+        });
         this.#removeMessageAfterTime(div, this.#msgDisplayTime);
-    }
-
-    /**
-     * Generate the div for a chat message
-     * @param {string} msg Message
-     * @param {object} tags Tags (user color, display-name, ...)
-     * @returns {HTMLDivElement} HTML
-     */
-    #generateMessageDiv(msg, tags) {
-        const div = document.createElement("div");
-        div.className = "message show";
-        div.innerHTML = `
-            <b style="color:${tags.color}">
-                ${this.escapeHtml(tags["display-name"])}
-            </b>: ${this.#renderMessage(msg, tags.emotes)}`;
-        return div;
     }
 
     /**
@@ -366,19 +356,11 @@ class TwitchChat {
     }
 
     /**
-     * Show a message that only appears in the browser source
+     * Show a message that only appears in the browser source (handled like a Twitch chat message)
      * @param {string} msg Message
      */
     #showBrowserSourceMessage(msg) {
-
-        // Create div with message
-        const div = document.createElement("div");
-        div.className = "message show";
-        div.style.color = "#cfcdcd";
-        div.innerHTML = this.escapeHtml(msg);
-
-        // Handle this like a Twitch chat message
-        this.chat.appendChild(div);
+        const div = this.createDiv({content: this.escapeHtml(msg), classes: "message show", textColor: "#cfcdcd", parent: this.chat});
         this.#removeMessageAfterTime(div, this.#msgDisplayTime);
         this.#hideOverflowingMessages();
     }
@@ -407,6 +389,24 @@ class TwitchChat {
      */
     convertSecondsToMilliseconds(s) {
         return s * 1000;
+    }
+
+    /**
+     * Simplified method for creating a div
+     * @param {Object} options
+     * @param {string} options.content Content (innerHTML)
+     * @param {string} options.classes Classes (None by default)
+     * @param {string} options.textColor Text color (By default inherit from CSS)
+     * @param {HTMLElement} options.parent Parent element (By default no element)
+     * @returns HTMLDivElement
+     */
+    createDiv({content = "", classes = "", textColor = "", parent = undefined}) {
+        const div = document.createElement("div");
+        div.className = classes;
+        if (textColor !== "") div.style.color = textColor;
+        if (content !== "") div.innerHTML = content;
+        if (typeof parent != 'undefined') parent.appendChild(div)
+        return div;
     }
 
     //#endregion
