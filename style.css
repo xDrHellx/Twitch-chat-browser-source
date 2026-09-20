@@ -71,3 +71,23 @@ body {
         transform: translateY(8px);
     }
 }
+
+/* Misc */
+.rainbow-text {
+    color: transparent;
+    background: linear-gradient(to right, #6666ff, #0099ff , #00ff00, #ff3399, #6666ff);
+    background-clip: text;
+    -webkit-background-clip: text;
+    animation: rainbow-animation 6s ease-in-out infinite;
+    background-size: 400% 100%;
+}
+
+@keyframes rainbow-animation {
+    0%, 100% {
+        background-position: 0;
+    }
+
+    50% {
+        background-position: 100% 0;
+    }
+}
