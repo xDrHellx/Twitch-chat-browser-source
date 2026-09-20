@@ -6,14 +6,14 @@ body {
     margin: 0;
     padding: 0;
     background: transparent;
-    overflow: hidden;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 /* Chat */
 #chat {
     width: 100%;
     height: 100%;
     padding: 10px;
+    gap: 1px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -25,9 +25,10 @@ body {
     padding: 7px 10px;
     background: rgba(0, 0, 0, 0.65);
     border-radius: 6px;
-    font-size: 22px;
+    font-size: 1.5rem;
     line-height: 1.35;
     word-wrap: break-word;
+    box-shadow: rgba(0, 0, 0, 0.75) 5px 5px;
 }
 .message, .text {
     color: white;
@@ -39,12 +40,12 @@ body {
     height: 28px;
     width: auto;
     margin: 0 2px;
-    vertical-align: middle;
+    vertical-align: bottom;
 }
 
 /* Showing & hiding messages */
 .message.show {
-    animation: show 0.3s ease-out;
+    animation: show 0.65s ease-out;
 }
 @keyframes show {
     from {
@@ -58,7 +59,7 @@ body {
 }
 
 .message.hide {
-    animation: hide 0.3s ease-out forwards;
+    animation: hide 0.65s ease-out forwards;
 }
 @keyframes hide {
     from {
