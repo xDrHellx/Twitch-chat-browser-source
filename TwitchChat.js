@@ -79,32 +79,15 @@ class TwitchChat {
         this.#ws.onmessage = e => {
             for (const line of e.data.split("\r\n")) {
                 this.#handle(line);
-                this.hideOverflowingMessages();
+                this.#hideOverflowingMessages();
             }
         };
 
         this.#ws.onclose = () => {
-            console.log("Disconnected from chat, reconnecting in 5 seconds...")
+            console.log("Disconnected from chat, attempting to reconnect...")
+            this.#showBrowserSourceMessage("Disconnected from chat, attempting to reconnect...");
             setTimeout(() => this.#connectToChat(), 5000);
         }
-    }
-
-    /**
-     * Hide messages overflowing from the top (messages that aren't entirely visible)
-     */
-    hideOverflowingMessages() {
-        const containerRect = this.chat.getBoundingClientRect(),
-            messages = [...this.chat.children];
-
-        const messagesToHide = messages.filter(message => {
-            const rect = message.getBoundingClientRect();
-            return rect.top < containerRect.top;
-        });
-
-        messagesToHide.forEach(message => {
-            message.classList.add("hide");
-            message.classList.remove("show");
-        });
     }
 
     //#endregion
@@ -231,7 +214,8 @@ class TwitchChat {
 
         // Response when successfully joining chat
         if (line.startsWith(`:${this.#username}!`) && line.includes(` JOIN #${this.#channel}`)) {
-            console.log("Connected to chat.");
+            console.log(`Connected to ${this.#channel}'s chat.`);
+            this.#showBrowserSourceMessage(`Connected to ${this.#channel}'s chat.`);
             return;
         }
 
@@ -361,6 +345,42 @@ class TwitchChat {
                 url = this.emotes.get(name) ?? this.emotes.get(`:${name}:`);
             return url != undefined ? `<img class="emote" src="${url}">` : this.escapeHtml(word);
         }).join("");
+    }
+
+    /**
+     * Hide messages overflowing from the top (messages that aren't entirely visible)
+     */
+    #hideOverflowingMessages() {
+        const containerRect = this.chat.getBoundingClientRect(),
+            messages = [...this.chat.children];
+
+        const messagesToHide = messages.filter(message => {
+            const rect = message.getBoundingClientRect();
+            return rect.top < containerRect.top;
+        });
+
+        messagesToHide.forEach(message => {
+            message.classList.add("hide");
+            message.classList.remove("show");
+        });
+    }
+
+    /**
+     * Show a message that only appears in the browser source
+     * @param {string} msg Message
+     */
+    #showBrowserSourceMessage(msg) {
+
+        // Create div with message
+        const div = document.createElement("div");
+        div.className = "message show";
+        div.style.color = "#cfcdcd";
+        div.innerHTML = this.escapeHtml(msg);
+
+        // Handle this like a Twitch chat message
+        this.chat.appendChild(div);
+        this.#removeMessageAfterTime(div, this.#msgDisplayTime);
+        this.#hideOverflowingMessages();
     }
 
     //#endregion
