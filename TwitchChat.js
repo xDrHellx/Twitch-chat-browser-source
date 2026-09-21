@@ -1,4 +1,5 @@
 import TwitchConfig from './TwitchConfig.js';
+import EmotesLoader from './EmotesLoader.js';
 
 /**
  * Class for loading & handling Twitch Chat
@@ -16,15 +17,8 @@ class TwitchChat {
     #ignoredUsers = [];
     #filterCommands = true;
 
-    #allowFfz = true;
-    #allowBttv = true;
-    #allow7tv = true;
-    #allowFfzGlobals = true;
-    #allowBttvGlobals = true;
-    #allow7tvGlobals = true;
-
     #ws = null;
-    #twitchUserId = null;
+    #emotesLoader = null;
     chat = document.getElementById("chat");
     emotes = new Map();
 
@@ -43,12 +37,7 @@ class TwitchChat {
         this.#ignoredUsers = config.ignoredUsers;
         this.#filterCommands = config.filterCommands;
 
-        this.#allowFfz = config.allowFfz;
-        this.#allowBttv = config.allowBttv;
-        this.#allow7tv = config.allow7tv;
-        this.#allowFfzGlobals = config.allowFfzGlobals;
-        this.#allowBttvGlobals = config.allowBttvGlobals;
-        this.#allow7tvGlobals = config.allow7tvGlobals;
+        this.#emotesLoader = new EmotesLoader(this.#channel, config.allowFfz, config.allowBttv, config.allow7tv, config.allowFfzGlobals, config.allowBttvGlobals, config.allow7tvGlobals);
     }
 
     //#endregion
@@ -60,7 +49,7 @@ class TwitchChat {
      */
     initialize() {
         this.#connectToChat();
-        this.#loadChannelEmotes();
+        this.#loadEmotes();
     }
 
     /**
@@ -90,110 +79,16 @@ class TwitchChat {
         }
     }
 
-    //#endregion
-
-    //#region Emotes
-
     /**
-     * Load FFZ, BTTV & 7TV emotes for the current channel
+     * Load emotes
      */
-    async #loadChannelEmotes() {
-        await this.#loadFfzEmotes();
-        await this.#loadBttvEmotes();
-        await this.#load7tvEmotes();
-        console.log("Loaded channel emotes:", this.emotes.size);
-    }
-
-    async #loadFfzEmotes() {
-        if (this.#allowFfz !== true) {
+    async #loadEmotes() {
+        if (this.#emotesLoader == null) {
             return;
         }
 
-        // Globals & effects
-        if (this.#allowFfzGlobals === true) {
-            await this.#loadEmotes(
-                "https://api.frankerfacez.com/v1/set/global",
-                data => Object.values(data.sets ?? {}).flatMap(s => s.emoticons ?? []).map(e => [e.name, e.urls?.["2"] || e.urls?.["1"]])
-            );
-        }
-
-        // Channel-specific
-        if (this.#channel.length > 0) {
-            await this.#loadEmotes(
-                `https://api.frankerfacez.com/v1/room/${this.#channel}`,
-                data => Object.values(data.sets ?? {}).flatMap(s => s.emoticons ?? []).map(e => [e.name, e.urls?.["2"] || e.urls?.["1"]])
-            );
-        }
-    }
-
-    async #loadBttvEmotes() {
-        if (this.#allowBttv !== true) {
-            return;
-        }
-
-        // Globals
-        if (this.#allowBttvGlobals === true) {
-            await this.#loadEmotes(
-                "https://api.betterttv.net/3/cached/emotes/global",
-                data => data.map(e => [e.code, `https://cdn.betterttv.net/emote/${e.id}/3x`])
-            );
-        }
-
-        // Channel-specific
-        this.#twitchUserId ??= await this.#getTwitchUserId(this.#channel);
-        if (this.#twitchUserId != null) {
-            await this.#loadEmotes(
-                `https://api.betterttv.net/3/cached/users/twitch/${this.#twitchUserId}`,
-                data => [...data.channeldata ?? [], ...data.sharedEmotes ?? []].map(e => [e.code, `https://cdn.betterttv.net/emote/${e.id}/3x`])
-            );
-        }
-    }
-
-    async #load7tvEmotes() {
-        if (this.#allow7tv !== true) {
-            return;
-        }
-
-        // Globals
-        if (this.#allow7tvGlobals === true) {
-            await this.#loadEmotes(
-                "https://7tv.io/v3/emote-sets/global",
-                data => (data.emotes ?? []).map(e => [e.name, `https://cdn.7tv.app/emote/${e.id}/4x.webp`])
-            );
-        }
-
-        // Channel-specific
-        this.#twitchUserId ??= await this.#getTwitchUserId(this.#channel);
-        if (this.#twitchUserId != null) {
-            await this.#loadEmotes(
-                `https://7tv.io/v3/users/twitch/${this.#twitchUserId}`,
-                data => (data.emote_set?.emotes ?? []).map(e => [e.name, `https://cdn.7tv.app/emote/${e.id}/4x.webp`])
-            );
-        }
-    }
-
-    /**
-     * Fetch emotes from an url & parse through the results using the passed function
-     * @param {string} url API url
-     * @param {Function} extractFunction Function for extracting the emotes
-     */
-    async #loadEmotes(url, extractFunction) {
-        try {
-            const data = await fetch(url).then(r => r.json());
-            for (const e of extractFunction(data)) {
-                this.emotes.set(e[0], e[1]);
-            }
-        } catch {}
-    }
-
-    /**
-     * Get a Twitch account's ID from its username
-     * We use decapi.me to avoid storing more credentials
-     * @param {string} username
-     * @returns {Promise<number> | null} ID (null if username)
-     */
-    async #getTwitchUserId(username) {
-        return username.length > 0 ? Number(await fetch(`https://decapi.me/twitch/id/${username}`).then(r => r.text())) : null;
+        await this.#emotesLoader.loadChannelEmotes();
+        this.emotes = this.#emotesLoader.emotes;
     }
 
     //#endregion
