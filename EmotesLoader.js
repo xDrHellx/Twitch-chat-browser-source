@@ -1,7 +1,7 @@
 /**
  * Class in charge of loading chat emotes
  */
-class EmotesLoader{
+class EmotesLoader {
 
     //#region Fields / properties
 
@@ -131,7 +131,7 @@ class EmotesLoader{
      * Get a Twitch account's ID from its username
      * We use decapi.me to avoid storing more credentials
      * @param {string} username
-     * @returns {Promise<number> | null} ID (null if username)
+     * @returns {Promise<number> | null} ID (null if username is invalid)
      */
     async #getTwitchUserId(username) {
         return username.length > 0 ? Number(await fetch(`https://decapi.me/twitch/id/${username}`).then(r => r.text())) : null;
