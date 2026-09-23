@@ -40,6 +40,9 @@ class TwitchConfig {
          */
         this.filterCommands = true
 
+        // If true, shows global badges next to usernames
+        this.showBadges = true;
+
         /**
          * If true, shows FrankerFaceZ, BetterTwitchTV, 7TV emotes
          * Just set the value to false if you want to disable one of them

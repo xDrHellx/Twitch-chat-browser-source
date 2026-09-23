@@ -1,5 +1,6 @@
 import TwitchConfig from './TwitchConfig.js';
 import EmotesLoader from './EmotesLoader.js';
+import BadgesLoader from './BadgesLoader.js';
 
 /**
  * Class for loading & handling Twitch Chat
@@ -16,9 +17,11 @@ class TwitchChat {
     #hiddenRewards = [];
     #ignoredUsers = [];
     #filterCommands = true;
+    #showBadges = true;
 
     #ws = null;
     #emotesLoader = null;
+    #BadgesLoader = null;
     chat = document.getElementById("chat");
     emotes = new Map();
 
@@ -36,8 +39,10 @@ class TwitchChat {
         this.#hiddenRewards = config.hiddenRewards;
         this.#ignoredUsers = config.ignoredUsers;
         this.#filterCommands = config.filterCommands;
+        this.#showBadges = config.showBadges;
 
         this.#emotesLoader = new EmotesLoader(this.#channel, config.allowFfz, config.allowBttv, config.allow7tv, config.allowFfzGlobals, config.allowBttvGlobals, config.allow7tvGlobals);
+        this.#BadgesLoader = new BadgesLoader();
     }
 
     //#endregion
@@ -114,12 +119,16 @@ class TwitchChat {
             return;
         }
 
-        // Filter private messages / whispers out
+        /**
+         * Filter whispers out
+         * Also retrieve tags, username & message
+         */
         const msg = line.match(/^@([^ ]+) :([^!]+)![^ ]+ PRIVMSG #[^ ]+ :(.*)$/);
         if (msg == null) {
             return;
         }
 
+        // Process tags to turn them into JS object (easier to work with)
         const tags = {};
         for (const tag of msg[1].split(";")) {
             const [key, ...value] = tag.split("=");
@@ -155,10 +164,7 @@ class TwitchChat {
 
         // Show the message, then remove it after some time
         const div = this.createDiv({
-            content: `
-                <b style="color:${tags.color}">
-                    ${this.escapeHtml(tags["display-name"])}
-                </b>: ${this.#renderMessage(msg, tags.emotes)}`,
+            content: `${this.#renderBadges(tags)}<span><b style="color:${tags.color}">${this.escapeHtml(tags["display-name"])}</b>: </span>${this.#renderMessage(msg, tags.emotes)}`,
             classes: "message show",
             parent: this.chat
         });
@@ -197,11 +203,11 @@ class TwitchChat {
                 }
 
                 const [start, end] = p.split("-").map(Number);
-                parts.push({start, end: end + 1, html: `<img class="emote" data-txt="${msg.slice(start, end + 1)}" src="https://static-cdn.jtvnw.net/emoticons/v2/${id}/default/dark/3.0">`});
+                parts.push({start, end: end + 1, html: `<img class="emote" alt="${msg.slice(start, end + 1)}" src="https://static-cdn.jtvnw.net/emoticons/v2/${id}/default/dark/3.0">`});
             }
         }
 
-        // Render emotes (in order) within the message
+        // Render emotes in order within the message
         parts.sort((a, b) => a.start - b.start);
         let html = "",
             last = 0;
@@ -211,7 +217,7 @@ class TwitchChat {
             last = p.end;
         }
 
-        return html + this.#renderEmotes(msg.slice(last));
+        return `<span class="text">${html + this.#renderEmotes(msg.slice(last))}</span>`;
     }
 
     /**
@@ -228,21 +234,41 @@ class TwitchChat {
             const 
                 name = word.replace(/^[^\w]*|[^\w]*$/g, ""),
                 url = this.emotes.get(name) ?? this.emotes.get(`:${name}:`);
-            return url != undefined ? `<img class="emote" src="${url}">` : this.escapeHtml(word);
+            return url != undefined ? `<img class="emote" alt="${name} src="${url}"">` : this.escapeHtml(word);
         }).join("");
+    }
+
+    /**
+     * Render a user's badges
+     * @param {object} tags
+     * @returns {string} String with rendered badges (or empty if we don't want to show them)
+     */
+    #renderBadges(tags) {
+        if (this.#showBadges != true) {
+            return "";
+        }
+
+        let badges = tags.badges?.split(",").map(badge => {
+            const
+                [name] = badge.split("/"),
+                badgeUrl = this.#BadgesLoader.getBadgeUrl(name);
+            return badgeUrl != "" ? `<img class="badge" src="${badgeUrl}" alt="${name}">` : "";
+        }).join("") ?? "";
+
+        return badges == "" ? "" : `<span class="badges">${badges}</span>`;
     }
 
     /**
      * Hide messages overflowing from the top (messages that aren't entirely visible)
      */
     #hideOverflowingMessages() {
-        const containerRect = this.chat.getBoundingClientRect(),
-            messages = [...this.chat.children];
-
-        const messagesToHide = messages.filter(message => {
-            const rect = message.getBoundingClientRect();
-            return rect.top < containerRect.top;
-        });
+        const
+            containerRect = this.chat.getBoundingClientRect(),
+            messages = [...this.chat.children],
+            messagesToHide = messages.filter(message => {
+                const rect = message.getBoundingClientRect();
+                return rect.top < containerRect.top;
+            });
 
         messagesToHide.forEach(message => {
             message.classList.add("hide");
