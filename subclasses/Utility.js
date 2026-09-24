@@ -37,7 +37,7 @@ class Utility {
         div.className = classes;
         if (textColor !== "") div.style.color = textColor;
         if (content !== "") div.innerHTML = content;
-        if (typeof parent != 'undefined') parent.appendChild(div)
+        if (parent != undefined) parent.appendChild(div)
         return div;
     }
 }
