@@ -1,6 +1,6 @@
 import TwitchConfig from './TwitchConfig.js';
-import EmotesLoader from './EmotesLoader.js';
-import BadgesLoader from './BadgesLoader.js';
+import EmotesLoader from './subclasses/EmotesLoader.js';
+import BadgesLoader from './subclasses/BadgesLoader.js';
 
 /**
  * Class for loading & handling Twitch Chat
