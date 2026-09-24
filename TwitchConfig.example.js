@@ -26,11 +26,11 @@ class TwitchConfig {
             "123-456-789"  // "Example reward name"
         ];
 
-        // Messages from these users won't be shown (usually for bots)
+        // Messages from these users won't be shown (usually for bots, separated by a comma))
         this.ignoredUsers = [
             "nightbot",
             "streamelements",
-            "moobot"
+            "moobot",
         ];
 
         /**
