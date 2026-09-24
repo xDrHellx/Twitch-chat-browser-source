@@ -1,4 +1,5 @@
 import TwitchConfig from './TwitchConfig.js';
+import Utility from './subclasses/Utility.js';
 import EmotesLoader from './subclasses/EmotesLoader.js';
 import BadgesLoader from './subclasses/BadgesLoader.js';
 
@@ -181,7 +182,7 @@ class TwitchChat {
             div.classList.add("hide")
             div.classList.remove("show");
             div.addEventListener("animationend", () => div.remove(), {once: true});
-        }, this.convertSecondsToMilliseconds(duration));
+        }, Utility.convertSecondsToMilliseconds(duration));
     }
 
     /**
@@ -234,7 +235,7 @@ class TwitchChat {
             const 
                 name = word.replace(/^[^\w]*|[^\w]*$/g, ""),
                 url = this.emotes.get(name) ?? this.emotes.get(`:${name}:`);
-            return url != undefined ? `<img class="emote" alt="${name} src="${url}"">` : this.escapeHtml(word);
+            return url != undefined ? `<img class="emote" alt="${name} src="${url}"">` : Utility.escapeHtml(word);
         }).join("");
     }
 
@@ -257,6 +258,10 @@ class TwitchChat {
 
         return badges == "" ? "" : `<span class="badges">${badges}</span>`;
     }
+
+    //#endregion
+
+    //#region Misc
 
     /**
      * Hide messages overflowing from the top (messages that aren't entirely visible)
@@ -281,53 +286,9 @@ class TwitchChat {
      * @param {string} msg Message
      */
     #showBrowserSourceMessage(msg) {
-        const div = this.createDiv({content: this.escapeHtml(msg), classes: "message show", textColor: "#cfcdcd", parent: this.chat});
+        const div = Utility.createDiv({content: Utility.escapeHtml(msg), classes: "message show", textColor: "#cfcdcd", parent: this.chat});
         this.#removeMessageAfterTime(div, this.#msgDisplayTime);
         this.#hideOverflowingMessages();
-    }
-
-    //#endregion
-
-    //#region Utils
-
-    /**
-     * Escape HTML characters in a string
-     * @param {string} str
-     */
-    escapeHtml(str) {
-        return str
-            .replaceAll("&", "&amp;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll('"', "&quot;")
-            .replaceAll("'", "&#039;");
-    }
-
-    /**
-     * Convert seconds to milliseconds
-     * @param {int} s 
-     * @returns {int} ms
-     */
-    convertSecondsToMilliseconds(s) {
-        return s * 1000;
-    }
-
-    /**
-     * Simplified method for creating a div
-     * @param {Object} options
-     * @param {string} options.content Content (innerHTML)
-     * @param {string} options.classes Classes (None by default)
-     * @param {string} options.textColor Text color (By default inherit from CSS)
-     * @param {HTMLElement} options.parent Parent element (By default no element)
-     * @returns HTMLDivElement
-     */
-    createDiv({content = "", classes = "", textColor = "", parent = undefined}) {
-        const div = document.createElement("div");
-        div.className = classes;
-        if (textColor !== "") div.style.color = textColor;
-        if (content !== "") div.innerHTML = content;
-        if (typeof parent != 'undefined') parent.appendChild(div)
-        return div;
     }
 
     //#endregion
