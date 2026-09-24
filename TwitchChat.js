@@ -18,11 +18,11 @@ class TwitchChat {
     #hiddenRewards = [];
     #ignoredUsers = [];
     #filterCommands = true;
-    #showBadges = true;
+    #template = "";
 
     #ws = null;
     #emotesLoader = null;
-    #BadgesLoader = null;
+    #badgesLoader = null;
     chat = document.getElementById("chat");
     emotes = new Map();
 
@@ -40,10 +40,10 @@ class TwitchChat {
         this.#hiddenRewards = config.hiddenRewards;
         this.#ignoredUsers = config.ignoredUsers;
         this.#filterCommands = config.filterCommands;
-        this.#showBadges = config.showBadges;
+        this.#template = fetch(`/tpl/${config.template}.html`).then(r => r.text());
 
         this.#emotesLoader = new EmotesLoader(this.#channel, config.allowFfz, config.allowBttv, config.allow7tv, config.allowFfzGlobals, config.allowBttvGlobals, config.allow7tvGlobals);
-        this.#BadgesLoader = new BadgesLoader();
+        this.#badgesLoader = new BadgesLoader();
     }
 
     //#endregion
@@ -163,13 +163,22 @@ class TwitchChat {
             return;
         }
 
-        // Show the message, then remove it after some time
-        const div = this.createDiv({
-            content: `${this.#renderBadges(tags)}<span><b style="color:${tags.color}">${this.escapeHtml(tags["display-name"])}</b>: </span>${this.#renderMessage(msg, tags.emotes)}`,
-            classes: "message show",
-            parent: this.chat
+        /**
+         * Populate template & show the message
+         * Then add a timeout to remove the message after some time
+         */
+        this.#template.then(html => {
+            const div = Utility.createDiv({
+                content: html
+                    .replace("{{BADGES}}", this.#renderBadges(tags))
+                    .replace("{{USERNAME}}", this.#renderUsername(tags["display-name"], tags.color))
+                    .replace("{{MESSAGE}}", this.#renderMessage(msg, tags.emotes)),
+                classes: "message show",
+                parent: this.chat
+            });
+
+            this.#removeMessageAfterTime(div, this.#msgDisplayTime);
         });
-        this.#removeMessageAfterTime(div, this.#msgDisplayTime);
     }
 
     /**
@@ -183,6 +192,20 @@ class TwitchChat {
             div.classList.remove("show");
             div.addEventListener("animationend", () => div.remove(), {once: true});
         }, Utility.convertSecondsToMilliseconds(duration));
+    }
+
+    //#endregion
+
+    //#region Rendering
+
+    /**
+     * Render a username
+     * @param {string} username Username
+     * @param {string} color User color
+     * @returns {string} Rendered username
+     */
+    #renderUsername(username, color) {
+        return `<b${color != "" ? ` style="color:${color}"` : ""}>${Utility.escapeHtml(username)}</b>`;
     }
 
     /**
@@ -224,7 +247,7 @@ class TwitchChat {
     /**
      * Render emotes from a string
      * @param {string} str
-     * @returns {string} String with rendered emotes
+     * @returns {string} Rendered emotes
      */
     #renderEmotes(str) {
         return str.split(/(\s+)/).map(word => {
@@ -242,17 +265,13 @@ class TwitchChat {
     /**
      * Render a user's badges
      * @param {object} tags
-     * @returns {string} String with rendered badges (or empty if we don't want to show them)
+     * @returns {string} Rendered badges span (or empty if we don't want to show them)
      */
     #renderBadges(tags) {
-        if (this.#showBadges != true) {
-            return "";
-        }
-
         let badges = tags.badges?.split(",").map(badge => {
             const
                 [name] = badge.split("/"),
-                badgeUrl = this.#BadgesLoader.getBadgeUrl(name);
+                badgeUrl = this.#badgesLoader.getBadgeUrl(name);
             return badgeUrl != "" ? `<img class="badge" src="${badgeUrl}" alt="${name}">` : "";
         }).join("") ?? "";
 

@@ -4,15 +4,14 @@
 class TwitchConfig {
     constructor() {
         /**
-         * Twitch credentials (necessary for connecting to chat)
-         * Channel to join (AKA chat to show)
+         * Twitch credentials (necessary for connecting to chat):
+         * - Channel to join (AKA chat to show)
+         * - Username, ideally same as channel
+         * - Access Token (associated with username)
+         *
+         * Wrong credentials will prevent from connecting to chat & retrieving emotes
          */
         this.channel = "your_channel";
-
-        /**
-         * Username, ideally same as your channel
-         * Must be associated to the Access Token below
-         */
         this.username = "your_username";
         this.accessToken = "access_token";
 
@@ -40,8 +39,11 @@ class TwitchConfig {
          */
         this.filterCommands = true
 
-        // If true, shows global badges next to usernames
-        this.showBadges = true;
+        /**
+         * Template to use for messages
+         * (case sensitive, .html file must exist in "tpl" subfolder)
+         */
+        this.template = "default";
 
         /**
          * If true, shows FrankerFaceZ, BetterTwitchTV, 7TV emotes
