@@ -40,8 +40,10 @@ class TwitchConfig {
         this.filterCommands = true
 
         /**
-         * Template to use for messages
-         * (case sensitive, .html file must exist in "tpl" subfolder)
+         * Template to use for messages :
+         * - Case sensitive
+         * - .html file must exist in "tpl" subfolder
+         * - .css file must exist in "css" subfolder
          */
         this.template = "default";
 

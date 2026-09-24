@@ -30,6 +30,15 @@ html, body, #chat {
     line-height: 1.35;
     word-wrap: break-word;
 }
+/* Special messages */
+.message:has(.text.success) {
+    background-color: rgb(0, 129, 6);
+    box-shadow: rgb(0, 85, 0) 5px 5px;
+}
+.message:has(.text.error) {
+    background-color: rgb(161, 0, 0);
+    box-shadow: rgb(104, 0, 0) 5px 5px;
+}
 /* Badges & emotes */
 .badges {
     display: inline-flex;

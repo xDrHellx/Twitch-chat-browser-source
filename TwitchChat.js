@@ -18,7 +18,8 @@ class TwitchChat {
     #hiddenRewards = [];
     #ignoredUsers = [];
     #filterCommands = true;
-    #template = "";
+    #htmlTpl = "";
+    #cssTpl = "";
 
     #ws = null;
     #emotesLoader = null;
@@ -36,14 +37,33 @@ class TwitchChat {
         this.#username = config.username;
         this.#accessToken = config.accessToken;
         this.#msgDisplayTime = config.msgDisplayTime;
-
         this.#hiddenRewards = config.hiddenRewards;
         this.#ignoredUsers = config.ignoredUsers;
         this.#filterCommands = config.filterCommands;
-        this.#template = fetch(`/tpl/${config.template}.html`).then(r => r.text());
-
         this.#emotesLoader = new EmotesLoader(this.#channel, config.allowFfz, config.allowBttv, config.allow7tv, config.allowFfzGlobals, config.allowBttvGlobals, config.allow7tvGlobals);
         this.#badgesLoader = new BadgesLoader();
+        this.getTemplate(config.template);
+    }
+
+    //#endregion
+
+    //#region Template
+
+    /**
+     * Get the HTML & CSS template files
+     * @param {string} template Template name
+     */
+    async getTemplate(template) {
+        this.#htmlTpl = this.getFileContent(`tpl/${template}.html`, `Missing HTML file for "${template}" template.`);
+        this.#cssTpl = await this.getFileContent(`css/${template}.css`, `Missing CSS file for "${template}" template.`);
+
+        // Include CSS to index.html
+        if (this.#cssTpl != undefined && this.#cssTpl != "") {
+            const linkTag = document.createElement("link");
+            linkTag.rel = "stylesheet";
+            linkTag.href = `css/${template}.css`;
+            document.head.appendChild(linkTag);
+        }
     }
 
     //#endregion
@@ -80,7 +100,7 @@ class TwitchChat {
 
         this.#ws.onclose = () => {
             console.log("Disconnected from chat, attempting to reconnect...")
-            this.#showBrowserSourceMessage("Disconnected from chat, attempting to reconnect...");
+            this.#showErrorMessage("Disconnected from chat, attempting to reconnect...");
             setTimeout(() => this.#connectToChat(), 5000);
         }
     }
@@ -116,7 +136,7 @@ class TwitchChat {
         // Response when successfully joining chat
         if (line.startsWith(`:${this.#username}!`) && line.includes(` JOIN #${this.#channel}`)) {
             console.log(`Connected to ${this.#channel}'s chat.`);
-            this.#showBrowserSourceMessage(`Connected to ${this.#channel}'s chat.`);
+            this.#showSuccessMessage(`Connected to ${this.#channel}'s chat.`);
             return;
         }
 
@@ -167,7 +187,7 @@ class TwitchChat {
          * Populate template & show the message
          * Then add a timeout to remove the message after some time
          */
-        this.#template.then(html => {
+        this.#htmlTpl.then(html => {
             const div = Utility.createDiv({
                 content: html
                     .replace("{{BADGES}}", this.#renderBadges(tags))
@@ -301,13 +321,49 @@ class TwitchChat {
     }
 
     /**
+     * Show a success message
+     * @param {string} msg
+     */
+    #showSuccessMessage(msg) {
+        this.#showBrowserSourceMessage(`<span class="text success">${msg}</span>`);
+    }
+
+    /**
+     * Show an error message
+     * @param {string} msg
+     */
+    #showErrorMessage(msg) {
+        this.#showBrowserSourceMessage(`<span class="text error">${msg}</span>`);
+    }
+
+    /**
      * Show a message that only appears in the browser source (handled like a Twitch chat message)
-     * @param {string} msg Message
+     * @param {string} msg
      */
     #showBrowserSourceMessage(msg) {
-        const div = Utility.createDiv({content: Utility.escapeHtml(msg), classes: "message show", textColor: "#cfcdcd", parent: this.chat});
+        const div = Utility.createDiv({content: `<span class="text">${msg}</span>`, classes: "message show", textColor: "#cfcdcd", parent: this.chat});
         this.#removeMessageAfterTime(div, this.#msgDisplayTime);
         this.#hideOverflowingMessages();
+    }
+
+    /**
+     * Get content from a file
+     * @param {string} path Path to file
+     * @param {string} errorMsg Error message to show
+     * @returns {Promise} Promise
+     */
+    async getFileContent(path, errorMsg) {
+        return fetch(path)
+            .then(r => r.ok === true ? r.text() : null)
+            .then(text => {
+                if (text === null) {
+                    console.log(errorMsg);
+                    this.#showErrorMessage(errorMsg);
+                    return;
+                }
+
+                return text;
+            });
     }
 
     //#endregion
