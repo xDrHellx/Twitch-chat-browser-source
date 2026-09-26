@@ -28,13 +28,26 @@ class Utility {
      * @param {Object} options
      * @param {string} options.content Content (innerHTML)
      * @param {string} options.classes Classes (None by default)
+     * @param {object} options.attributes Attributes (None by default, format: {attribute: value, ...})
      * @param {string} options.textColor Text color (By default inherit from CSS)
      * @param {HTMLElement} options.parent Parent element (By default no element)
      * @returns {HTMLDivElement} Div instance
      */
-    static createDiv({content = "", classes = "", textColor = "", parent = undefined}) {
+    static createDiv({content = "", classes = "", attributes = {}, textColor = "", parent = undefined}) {
         const div = document.createElement("div");
         div.className = classes;
+        
+        // Add attributes
+        if (Object.keys(attributes).length > 0) {
+            for (const [key, value] of Object.entries(attributes)) {
+                if (key == undefined || value == undefined) {
+                    continue;
+                }
+
+                div.setAttribute(key, value);
+            }
+        }
+
         if (textColor !== "") div.style.color = textColor;
         if (content !== "") div.innerHTML = content;
         if (parent != undefined) parent.appendChild(div)
