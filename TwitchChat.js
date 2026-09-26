@@ -140,11 +140,8 @@ class TwitchChat {
             return;
         }
 
-        /**
-         * Filter whispers out
-         * Also retrieve tags, username & message
-         */
-        const msg = line.match(/^@([^ ]+) :([^!]+)![^ ]+ PRIVMSG #[^ ]+ :(.*)$/);
+        // Filter whispers out while retrieving tags, username, indicator & message
+        let msg = line.match(/^@([^ ]+) :([^!]+)(?:![^ ]+)? (PRIVMSG|CLEARMSG) #[^ ]+ :(.*)$/);
         if (msg == null) {
             return;
         }
@@ -156,8 +153,15 @@ class TwitchChat {
             tags[key] = value.join("=");
         }
 
+        // If the message was deleted on Twitch, delete it in the browser source too
+        if (msg[3] == "CLEARMSG") {
+            this.#deleteChatMessage(tags["target-message-id"]);
+            return;
+        }
+
+        // Otherwise show the message in browser source
         tags.username = msg[2].toLowerCase();
-        this.#showChatMessage(tags, msg[3]);
+        this.#showChatMessage(tags, msg[4]);
     }
 
     /**
@@ -167,19 +171,18 @@ class TwitchChat {
      */
     #showChatMessage(tags, msg) {
 
-        // Filter out messages from ignored users (mostly bots)
+        /**
+         * Filter out:
+         * - Messages from ignored users (mostly bots)
+         * - Bot commands
+         * - Channel point rewards that requires user input
+         */ 
         const user = tags.username;
-        if (this.#ignoredUsers.some(ignoredUser => ignoredUser.toLowerCase() === user.toLowerCase())) {
-            return;
-        }
-
-        // Bot commands
-        if (this.#filterCommands == true && msg.trim().startsWith("!")) {
-            return;
-        }
-
-        // Messages from channel point rewards that requires user input
-        if (Object.hasOwn(tags, "custom-reward-id") == true && this.#hiddenRewards.includes(tags["custom-reward-id"])) {
+        if (
+            this.#ignoredUsers.some(ignoredUser => ignoredUser.toLowerCase() === user.toLowerCase())
+            || (this.#filterCommands == true && msg.trim().startsWith("!"))
+            || (Object.hasOwn(tags, "custom-reward-id") == true && this.#hiddenRewards.includes(tags["custom-reward-id"]))
+        ) {
             return;
         }
 
@@ -194,6 +197,7 @@ class TwitchChat {
                     .replace("{{USERNAME}}", this.#renderUsername(tags["display-name"], tags.color))
                     .replace("{{MESSAGE}}", this.#renderMessage(msg, tags.emotes)),
                 classes: "message show",
+                attributes: Object.hasOwn(tags, "target-message-id") == true ? {"data-msg-id": tags["target-message-id"]} : {},
                 parent: this.chat
             });
 
@@ -202,9 +206,20 @@ class TwitchChat {
     }
 
     /**
+     * Delete a message received from Twitch chat
+     * @param {string} id Message ID
+     */
+    #deleteChatMessage(id) {
+        const msg = this.chat.querySelector(`[data-msg-id="${id}"]`);
+        if (msg != undefined) {
+            this.#removeMessageAfterTime(msg, 0);
+        }
+    }
+
+    /**
      * Remove a chat message after a specified duration
      * @param {HTMLDivElement} div Message div
-     * @param {int} duration Duration to wait for (in milliseconds) before removing the message
+     * @param {int} duration Duration to wait for (in seconds) before removing the message
      */
     #removeMessageAfterTime(div, duration) {
         setTimeout(() => {
