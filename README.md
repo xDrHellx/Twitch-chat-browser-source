@@ -15,7 +15,7 @@ This can be an issue if, for example, you want to hide user inputs for channel p
   - Check "Local file"
   - Select the "index.html" file
   - Set width (recommended 450)
-  - Set height (recommended 400)
+  - Set height (recommended at least 400)
   - Check "Shutdown source when not visible" (not necessary but good for saving resources)
 
 ## Customizing chat appearance
@@ -29,7 +29,7 @@ This can be an issue if, for example, you want to hide user inputs for channel p
 
 _Note: None of these variables are required, for example if you don't want to see badges or usernames, you can just add {{MESSAGE}}._
 
-## Why are channel-specific badges not showing?
-To simplify implementation, only global badges are shown. Channel-specific badges (custom subscriber icons, ...) would require more Twitch API credentials.
+## Why are custom badges not showing?
+To simplify implementation, only global badges are shown. Custom badges (custom subscriber icons, etc) would require more Twitch API credentials.
 
 I want this to stay simple and easy to setup.
