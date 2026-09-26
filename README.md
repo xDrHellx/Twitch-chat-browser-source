@@ -7,6 +7,9 @@ Using local files allows full customization of chat.
 When using chat integrations through URLs, you won't be able to fully customize chat.  
 This can be an issue if, for example, you want to hide user inputs for channel point rewards or other things.
 
+## Requirements
+You'll need an Access Token associated with your channel (or the channel the chat is for).
+
 ## How to setup
 - Download files via <> Code => Local => Download ZIP and extract anywhere.
 - Rename the "TwitchConfig.example.js" file to "TwitchConfig.js"
