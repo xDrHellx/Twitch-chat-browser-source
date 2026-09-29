@@ -1,7 +1,7 @@
 /**
  * Class containing the config for showing Twitch chat
  */
-class TwitchConfig {
+export default class TwitchConfig {
     constructor() {
         /**
          * Twitch credentials (necessary for connecting to chat):
@@ -66,6 +66,3 @@ class TwitchConfig {
         this.allow7tvGlobals    = true;
     }
 }
-
-// Don't touch this
-export default TwitchConfig;

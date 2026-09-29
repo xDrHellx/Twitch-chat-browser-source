@@ -1,7 +1,7 @@
 /**
  * Class in charge of loading chat emotes
  */
-class EmotesLoader {
+export default class EmotesLoader {
 
     //#region Fields / properties
 
@@ -153,5 +153,3 @@ class EmotesLoader {
 
     //#endregion
 }
-
-export default EmotesLoader;

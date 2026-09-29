@@ -1,7 +1,7 @@
 /**
  * Class in charge of loading Twitch badges
  */
-class BadgesLoader {
+export default class BadgesLoader {
 
     //#region Fields / properties
 
@@ -88,5 +88,3 @@ class BadgesLoader {
 
     //#endregion
 }
-
-export default BadgesLoader;

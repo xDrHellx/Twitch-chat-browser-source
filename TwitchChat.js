@@ -6,7 +6,7 @@ import BadgesLoader from './subclasses/BadgesLoader.js';
 /**
  * Class for loading & handling Twitch Chat
  */
-class TwitchChat {
+export default class TwitchChat {
 
     //#region Fields / properties
 
@@ -383,5 +383,3 @@ class TwitchChat {
 
     //#endregion
 }
-
-export default TwitchChat;

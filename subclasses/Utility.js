@@ -1,4 +1,4 @@
-class Utility {
+export default class Utility {
 
     /**
      * Escape HTML characters in a string
@@ -54,5 +54,3 @@ class Utility {
         return div;
     }
 }
-
-export default Utility;
