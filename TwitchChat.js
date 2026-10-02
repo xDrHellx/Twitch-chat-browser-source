@@ -293,7 +293,7 @@ export default class TwitchChat {
             const 
                 name = word.replace(/^[^\w]*|[^\w]*$/g, ""),
                 url = this.emotes.get(name) ?? this.emotes.get(`:${name}:`);
-            return url != undefined ? `<img class="emote" alt="${name} src="${url}"">` : Utility.escapeHtml(word);
+            return url != undefined ? `<img class="emote" alt="${name}" src="${url}">` : Utility.escapeHtml(word);
         }).join("");
     }
 
