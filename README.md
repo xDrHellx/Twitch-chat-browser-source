@@ -14,9 +14,9 @@ You'll need an Access Token associated with your channel (or the channel the cha
 
 ## How to setup
 
-- Download files via <> Code => Local => Download ZIP and extract anywhere.
+- Download files via `<> Code => Local => Download ZIP` and extract anywhere.
 - Rename the "TwitchConfig.example.js" file to "TwitchConfig.js"
-- Open the file in a text editor (Notepad, VS Code, ...) and changes values based on your preferences
+- Open the file in a text editor (Notepad, VS Code, ...) and change values based on your preferences
 - Create a new Browser Source in OBS Studio:
   - Check "Local file"
   - Select the "index.html" file
